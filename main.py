@@ -51,21 +51,22 @@ def kurang(startPuzzle, index):
 
 
 def printPuzzle(puzzle):
+    fence = "---------------------------------"
+    print(fence)
     for i in range(len(puzzle)):
         value = puzzle[i] if puzzle[i] != BLANK else " "
-        print("", value, end="\t") if (i%4 != 0 or i == 0) else print("\n", value, end="\t")
-    print()
+        print("  ", value, end="\t|") if (i%4 != 0 or i == 0) else print("\n" + fence + "\n  ", value, end="\t|")
+    print("\n" + fence + "\n")
 
 
 def printKurangList():
-    global kurangList
-    print("===Nilai fungsi Kurang(i)==="); print("i\tKurang(i)")
+    print("=====Nilai fungsi Kurang(i)======"); print("\t i\tKurang(i)")
+    print("---------------------------------")
     for index in range(len(kurangList)): 
-        print(index+1, "\t", kurangList[index])
+        print("\t", index+1, "\t ", kurangList[index])
 
 
 def cost(puzzle):
-    global final
     g = 0
     for i in range(PUZZLE_SIZE):
         if final[i] != BLANK and puzzle[i] != final[i] : g+=1
@@ -81,7 +82,6 @@ def popPuzzleQueue():
 
 
 def searchMinCostElementQueue():
-    global queue
     minCostIndex = 0
     for i in range(len(queue)):
         if queue[i][0] < queue[minCostIndex][0]:
@@ -97,9 +97,8 @@ def solve(puzzle):
     countNode = 1
     #print start puzzle
     print("Node ke-", countNode, "(PARENT NODE) | Cost: ", cost(solution))
-    print("============================")
+    
     printPuzzle(solution)
-    print("============================\n")
     while queue != [] and solution != final:
         solution = popPuzzleQueue()
         visitedNode.append(solution)
@@ -120,9 +119,7 @@ def generateChildNode(puzzle):
                 tup = (cost(childPuzzle), childPuzzle)
                 queue.append(tup); countNode+=1
                 print("Node ke-",countNode, "| Cost: ", cost(childPuzzle))
-                print("============================")
                 printPuzzle(childPuzzle)
-                print("============================\n")
     # print("Parent Node: ")
     # printPuzzle(puzzle)
                 
@@ -144,7 +141,7 @@ def swapBlankPosition(puzzle, direction):
 
 def isPossibleSwap(puzzle, direction):
     indexBlank = searchBlankIndex(puzzle)
-    # change index view to 2-D array
+    # change index view to 2-D array index
     rowBlank = indexBlank//ROW_SIZE
     colBlank = indexBlank%ROW_SIZE
     if direction == "up":
@@ -162,13 +159,13 @@ puzzlepath = "./puzzle"
 fileName = os.path.join(puzzlepath, input("File name: "))
 # fileName = "3.txt"; fileName = os.path.join(puzzlepath, fileName)
 file = open(fileName, "r")
-start = [data for line in file for data in line.split()]
-start = list(map(lambda x: int(x) if x != "-" else BLANK, start))
-print("=====Posisi awal Puzzle====="); 
+start = [data for line in file for data in line.split()] #extract data from external file
+start = list(map(lambda x: int(x) if x != "-" else BLANK, start)) #map to int list
+print("=======Posisi awal Puzzle========"); 
 printPuzzle(start)
-print("============================\n")
+print("=================================\n")
 generateKurangList(start)
-print("============================\n")
+print("=================================\n")
 print("Sigma Kurang(i) + X = ", sigmaKurangPlusX(start), "\n");  
 if solvable(start):
     print("Karena", sigmaKurangPlusX(start), "% 2 == 0 maka puzzle : Solvable!")
