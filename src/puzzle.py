@@ -11,8 +11,6 @@ ROW_SIZE = 4
 plusOneIndex = [1, 3, 4, 6, 9, 11, 12, 14] #digunakan untuk X = 1 pada fungsi solvable(puzzle)
 kurangList = [0 for i in range(PUZZLE_SIZE)]
 operator = ["up", "down", "left", "right"]
-# operator = ["up", "right", "down", "left"]
-# operator = ["right", "down", "left", "up"]
 final = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ,13 ,14 ,15 , BLANK]
 countNode = 0 #variabel penghitung banyak simpul yg digenerate 
 queue = []
@@ -94,12 +92,8 @@ def solvable(startPuzzle):
 
 def solve(puzzle):
     global queue, visitedNode, countNode, costSolution
-    # queue.append(puzzle)
     countNode = 1
     heapq.heappush(queue, (puzzle.cost, -1*countNode, puzzle))
-    #print start puzzle
-    # print("Node ke-", countNode, "(PARENT NODE) <=> Cost: ", queue[0].cost)
-    # queue[0].print()
     while queue != []:
         # solution = popPuzzleQueue()
         solution = heapq.heappop(queue)[2]
@@ -162,14 +156,10 @@ def generateChildNode(parentPuzzle):
             if tuple(childPuzzleState[0]) not in visitedNode:
                 childPuzzle = createNewPuzzle(parentPuzzle, childPuzzleState[0], childPuzzleState[1]) 
                 heapq.heappush(queue, (childPuzzle.cost, -1*countNode, childPuzzle))
-                # print("Node ke-",countNode, "<=> Cost: ", childPuzzle.cost, "LEVEL: ", childPuzzle.level)
-                # childPuzzle.print()
-    # print("Parent Node: ")
-    # parentPuzzle.print()
 
-puzzlepath = "./puzzle" 
+
+puzzlepath = "../test" 
 fileName = os.path.join(puzzlepath, input("File name: "))
-# fileName = "3.txt"; fileName = os.path.join(puzzlepath, fileName)
 file = open(fileName, "r")
 start = [data for line in file for data in line.split()] #extract data from external file
 start = list(map(lambda x: int(x) if x != "-" else BLANK, start)) #map to int list
