@@ -96,9 +96,8 @@ def solve(puzzle):
     tup = (cost(solution), solution)
     countNode = 1
     #print start puzzle
-    print("Node ke-", countNode, "(PARENT NODE) | Cost: ", cost(solution))
-    
-    printPuzzle(solution)
+    # print("Node ke-", countNode, "(PARENT NODE) <=> Cost: ", cost(solution))
+    # printPuzzle(solution)
     while queue != [] and solution != final:
         solution = popPuzzleQueue()
         visitedNode.append(solution)
@@ -118,8 +117,8 @@ def generateChildNode(puzzle):
                     generateNewLevel = False
                 tup = (cost(childPuzzle), childPuzzle)
                 queue.append(tup); countNode+=1
-                print("Node ke-",countNode, "| Cost: ", cost(childPuzzle))
-                printPuzzle(childPuzzle)
+                # print("Node ke-",countNode, "<=> Cost: ", cost(childPuzzle))
+                # printPuzzle(childPuzzle)
     # print("Parent Node: ")
     # printPuzzle(puzzle)
                 
@@ -171,16 +170,13 @@ if solvable(start):
     print("Karena", sigmaKurangPlusX(start), "% 2 == 0 maka puzzle : Solvable!")
     start_time = time.time()
     solve(start)
-    print("Runtime: %s seconds" % (time.time() - start_time))
+    runtime = time.time() - start_time
+    print("Jalur B&B:"); i = 1
+    for node in visitedNode:
+        print("Jalur ke-", i, "| Cost: ", cost(node))
+        printPuzzle(node); i+=1
+    print("Runtime: %s seconds" %runtime)
     print("Jumlah simpul yang dibangkitkan:", countNode)
-
-
-    # print("Jalur B&B:"); i = 1
-    # for node in visitedNode:
-    #     print("Jalur ke-", i, "| Cost: ", cost(node))
-    #     print("============================")
-    #     printPuzzle(node); i+=1
-    #     print("============================\n")
 else:
     print("Karena", sigmaKurangPlusX(start), "% 2 != 0 maka puzzle : Not Solvable!")
 
