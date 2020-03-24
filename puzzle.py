@@ -1,6 +1,7 @@
 import os
 import time
 import copy
+import heapq
 
 # constants
 BLANK = 16
@@ -9,14 +10,14 @@ ROW_SIZE = 4
 # Global variable
 plusOneIndex = [1, 3, 4, 6, 9, 11, 12, 14] #digunakan untuk X = 1 pada fungsi solvable(puzzle)
 kurangList = [0 for i in range(PUZZLE_SIZE)]
-# operator = ["up", "down", "left", "right"]
-operator = ["up", "right", "down", "left"]
+operator = ["up", "down", "left", "right"]
+# operator = ["up", "right", "down", "left"]
 # operator = ["right", "down", "left", "up"]
 final = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ,13 ,14 ,15 , BLANK]
 countNode = 0 #variabel penghitung banyak simpul yg digenerate 
 queue = []
-visitedNode = []
-costSolution = float('inf')
+visitedNode = set()
+costSolution = float('inf') #inisiasi cost untuk solusi
 
 class Puzzle:
     def __init__(self, state):
@@ -76,7 +77,8 @@ def kurang(startPuzzle, index):
     return kurang
 
 def printKurangList():
-    print("=====Nilai fungsi Kurang(i)======"); print("\t i\tKurang(i)")
+    print("=====Nilai fungsi Kurang(i)======")
+    print("\t i\tKurang(i)")
     print("---------------------------------")
     for index in range(len(kurangList)): 
         print("\t", index+1, "\t ", kurangList[index])
@@ -90,82 +92,94 @@ def sigmaKurangPlusX(startPuzzle):
 def solvable(startPuzzle):
     return sigmaKurangPlusX(startPuzzle)%2==0
 
-def popPuzzleQueue():
-    global queue
-    minIndex = searchMinCostElementQueue()
-    item = queue[minIndex]
-    del queue[minIndex]
-    return item
-
-def searchMinCostElementQueue():
-    minCostIndex = 0
-    for i in range(len(queue)):
-        if queue[i].cost < queue[minCostIndex].cost or (queue[i].cost == queue[minCostIndex].cost and queue[i].level < queue[minCostIndex].level): # cost kurang dari atau cost sama tapi level kurang dari
-            minCostIndex = i
-    return minCostIndex
-
 def solve(puzzle):
     global queue, visitedNode, countNode, costSolution
-    queue.append(puzzle)
+    # queue.append(puzzle)
     countNode = 1
+    heapq.heappush(queue, (puzzle.cost, -1*countNode, puzzle))
     #print start puzzle
-    print("Node ke-", countNode, "(PARENT NODE) <=> Cost: ", queue[0].cost)
-    queue[0].print()
+    # print("Node ke-", countNode, "(PARENT NODE) <=> Cost: ", queue[0].cost)
+    # queue[0].print()
     while queue != []:
-        solution = popPuzzleQueue()
-        visitedNode.append(solution.state)
-        if (solution.cost < costSolution):
+        # solution = popPuzzleQueue()
+        solution = heapq.heappop(queue)[2]
+        visitedNode.add(tuple(solution.state))
+        if (solution.cost < costSolution): #berfungsi untuk membunuh simpul yang costnya > simpul solusi setelah simpul solusi ditemukan
             if (solution.state == final):
                 result = copy.deepcopy(solution)
                 costSolution = solution.cost
             else:
                 generateChildNode(solution)
-    
     return result
-        
         
 
 def swapBlankPosition(puzzle, direction):
     newPuzzle = copy.deepcopy(puzzle)
+    indexBlank = newPuzzle.blankIndex
     if direction == "up":
-        newPuzzle.state[newPuzzle.blankIndex], newPuzzle.state[newPuzzle.blankIndex-4] = newPuzzle.state[newPuzzle.blankIndex-4], newPuzzle.state[newPuzzle.blankIndex]
+        newBlankIndex = indexBlank-4
     elif direction == "down":
-        newPuzzle.state[newPuzzle.blankIndex], newPuzzle.state[newPuzzle.blankIndex+4] = newPuzzle.state[newPuzzle.blankIndex+4], newPuzzle.state[newPuzzle.blankIndex]
+        newBlankIndex = indexBlank+4
     elif direction == "left":
-        newPuzzle.state[newPuzzle.blankIndex], newPuzzle.state[newPuzzle.blankIndex-1] = newPuzzle.state[newPuzzle.blankIndex-1], newPuzzle.state[newPuzzle.blankIndex]
+        newBlankIndex = indexBlank-1
     else: #right
-        newPuzzle.state[newPuzzle.blankIndex], newPuzzle.state[newPuzzle.blankIndex+1] = newPuzzle.state[newPuzzle.blankIndex+1], newPuzzle.state[newPuzzle.blankIndex]
-    newPuzzle.blankIndex = newPuzzle.searchBlankIndex()
+        newBlankIndex = indexBlank+1
+    newPuzzle.state[indexBlank], newPuzzle.state[newBlankIndex] = newPuzzle.state[newBlankIndex], newPuzzle.state[indexBlank]
+    newPuzzle.blankIndex = newBlankIndex
     return newPuzzle
+
+def createNewState(state, direction, blankIndex):
+    newState = copy.deepcopy(state)
+    indexBlank = blankIndex
+    if direction == "up":
+        newBlankIndex = indexBlank-4
+    elif direction == "down":
+        newBlankIndex = indexBlank+4
+    elif direction == "left":
+        newBlankIndex = indexBlank-1
+    else: #right
+        newBlankIndex = indexBlank+1
+    newState[indexBlank], newState[newBlankIndex] = newState[newBlankIndex], newState[indexBlank]
+    return (newState, newBlankIndex)
+
+def createNewPuzzle(parentPuzzle, currentState, currentBlankIndex):
+    global countNode
+    newPuzzle = copy.deepcopy(parentPuzzle)
+    newPuzzle.state = currentState
+    newPuzzle.blankIndex = currentBlankIndex
+    newPuzzle.level+=1
+    newPuzzle.cost = newPuzzle.calculateCost()
+    newPuzzle.path = parentPuzzle.path + [parentPuzzle]
+    countNode+=1
+    return newPuzzle
+
 
 def generateChildNode(parentPuzzle):
     global queue, countNode
     for direction in operator:
         if parentPuzzle.isPossibleSwap(direction):
-            childPuzzle = swapBlankPosition(parentPuzzle, direction)
-            if childPuzzle.state not in visitedNode:
-                childPuzzle.level+=1
-                childPuzzle.cost = childPuzzle.calculateCost()
-                childPuzzle.path = parentPuzzle.path + [parentPuzzle]
-                queue.append(childPuzzle); countNode+=1
-                print("Node ke-",countNode, "<=> Cost: ", childPuzzle.cost, "LEVEL: ", childPuzzle.level)
-                childPuzzle.print()
+            childPuzzleState = createNewState(parentPuzzle.state, direction, parentPuzzle.blankIndex)
+            if tuple(childPuzzleState[0]) not in visitedNode:
+                childPuzzle = createNewPuzzle(parentPuzzle, childPuzzleState[0], childPuzzleState[1]) 
+                heapq.heappush(queue, (childPuzzle.cost, -1*countNode, childPuzzle))
+                # print("Node ke-",countNode, "<=> Cost: ", childPuzzle.cost, "LEVEL: ", childPuzzle.level)
+                # childPuzzle.print()
     # print("Parent Node: ")
     # parentPuzzle.print()
 
-puzzlepath = "./puzzle"
+puzzlepath = "./puzzle" 
 fileName = os.path.join(puzzlepath, input("File name: "))
 # fileName = "3.txt"; fileName = os.path.join(puzzlepath, fileName)
 file = open(fileName, "r")
 start = [data for line in file for data in line.split()] #extract data from external file
 start = list(map(lambda x: int(x) if x != "-" else BLANK, start)) #map to int list
 puzzle = Puzzle(start)
-print("=======Posisi awal Puzzle========"); 
+print("=======Posisi awal Puzzle========")
 puzzle.print()
 print("=================================\n")
 generateKurangList(puzzle)
 print("=================================\n")
-print("Sigma Kurang(i) + X = ", sigmaKurangPlusX(puzzle));  
+print("Sigma Kurang(i) + X = ", sigmaKurangPlusX(puzzle));
 
 if solvable(puzzle):
     print("Karena", sigmaKurangPlusX(puzzle), "% 2 == 0 maka puzzle : Solvable!\n")
@@ -175,9 +189,9 @@ if solvable(puzzle):
 
     print("============Jalur B&B============"); i = 1
     for o in solution.path:
-        print("Jalur ke-", i, "| Level: ", o.level, "| Cost: ", o.cost)
+        print("Jalur ke-"+str(i), "| Level: ", o.level, "| Cost: ", o.cost)
         o.print(); i+=1
-    print("Jalur ke-", i, "| Level: ", solution.level, "| Cost: ", solution.cost)
+    print("Goal Node | Level: ", solution.level, "| Cost: ", solution.cost)
     solution.print()
     print("Runtime: %s seconds" %runtime)
     print("Jumlah simpul yang dibangkitkan:", countNode)
